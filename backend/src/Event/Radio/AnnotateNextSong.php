@@ -31,6 +31,7 @@ final class AnnotateNextSong extends Event
         'liq_amplify',
         'azuracast_autocue',
         'azuracast_cache_key',
+        'azuracast_interrupt_skip',
         'autocue_cue_in',
         'autocue_cue_out',
         'autocue_fade_in',

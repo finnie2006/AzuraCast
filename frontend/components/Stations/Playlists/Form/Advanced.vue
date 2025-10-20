@@ -38,6 +38,10 @@ const backendOptions = [
         text: $gettext('Interrupt other songs to play at scheduled time.')
     },
     {
+        value: 'interrupt_start_new',
+        text: $gettext('After interrupting, start a new track instead of resuming the interrupted one.')
+    },
+    {
         value: 'single_track',
         text: $gettext('Only play one track at scheduled time.')
     },

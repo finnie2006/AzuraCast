@@ -263,6 +263,12 @@ final class Annotations implements EventSubscriberInterface
                 'jingle_mode' => 'true',
             ]);
         }
+
+        if ($playlist->backendInterruptStartNewSong()) {
+            $event->addAnnotations([
+                'azuracast_interrupt_skip' => true,
+            ]);
+        }
     }
 
     public function annotateRequest(AnnotateNextSong $event): void

@@ -117,6 +117,9 @@ let azuracast.live_dj_name = ref("")
 # Whether Liquidsoap is currently transitioning to a live stream.
 let azuracast.to_live = ref(false)
 
+# Whether the next non-interrupt track should be skipped after an interrupting playlist runs.
+let azuracast.pending_interrupt_skip = ref(false)
+
 # Whether a DJ is successfully authenticated (and thus live broadcasting is enabled).
 let azuracast.live_enabled = ref(false)
 
@@ -615,29 +618,43 @@ Feedback API
 
 # Send metadata changes back to AzuraCast
 def azuracast.send_feedback(m) =
-    if (m["is_error_file"] != "true") then
-        if (m["title"] != azuracast.last_title() or m["artist"] != azuracast.last_artist()) then
-            azuracast.last_title := m["title"]
-            azuracast.last_artist := m["artist"]
+    if (m["azuracast_interrupt_skip"] == "true") then
+        azuracast.pending_interrupt_skip := true
+    end
 
-            # Only send some metadata to AzuraCast
-            def fl(k, _) =
-                tags = ["song_id", "media_id", "playlist_id", "sq_id", "artist", "title"]
-                list.mem(k, tags)
+    if azuracast.pending_interrupt_skip() and m["azuracast_interrupt_skip"] != "true" then
+        if (m["is_live"] == "true" or m["is_error_file"] == "true") then
+            azuracast.pending_interrupt_skip := false
+        else
+            azuracast.pending_interrupt_skip := false
+            log(label="interrupt", level=3, "Interrupt complete; skipping resumed track.")
+            source.skip(radio)
+        end
+    else
+        if (m["is_error_file"] != "true") then
+            if (m["title"] != azuracast.last_title() or m["artist"] != azuracast.last_artist()) then
+                azuracast.last_title := m["title"]
+                azuracast.last_artist := m["artist"]
+
+                # Only send some metadata to AzuraCast
+                def fl(k, _) =
+                    tags = ["song_id", "media_id", "playlist_id", "sq_id", "artist", "title"]
+                    list.mem(k, tags)
+                end
+
+                feedback_meta = list.assoc.filter((fl), metadata.cover.remove(m))
+
+                j = json()
+                for item = list.iterator(feedback_meta) do
+                    let (tag, value) = item
+                    j.add(tag, value)
+                end
+
+                _ = azuracast.api_call(
+                    "feedback",
+                    json.stringify(compact=true, j)
+                )
             end
-
-            feedback_meta = list.assoc.filter((fl), metadata.cover.remove(m))
-
-            j = json()
-            for item = list.iterator(feedback_meta) do
-                let (tag, value) = item
-                j.add(tag, value)
-            end
-
-            _ = azuracast.api_call(
-                "feedback",
-                json.stringify(compact=true, j)
-            )
         end
     end
 end

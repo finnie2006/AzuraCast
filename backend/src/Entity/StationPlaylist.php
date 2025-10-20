@@ -40,6 +40,7 @@ final class StationPlaylist implements
     public const int DEFAULT_REMOTE_BUFFER = 20;
 
     public const string OPTION_INTERRUPT_OTHER_SONGS = 'interrupt';
+    public const string OPTION_INTERRUPT_START_NEW_SONG = 'interrupt_start_new';
     public const string OPTION_PLAY_SINGLE_TRACK = 'single_track';
     public const string OPTION_MERGE = 'merge';
     public const string OPTION_PRIORITIZE_OVER_REQUESTS = 'prioritize';
@@ -197,7 +198,7 @@ final class StationPlaylist implements
 
     #[OA\Property(
         items: new OA\Items(type: 'string'),
-        example: "interrupt,loop_once,single_track,merge"
+        example: "interrupt,interrupt_start_new,loop_once,single_track,merge"
     )]
     public array $backend_options {
         get => explode(',', $this->backend_options_raw ?? '');
@@ -209,6 +210,12 @@ final class StationPlaylist implements
     public function backendInterruptOtherSongs(): bool
     {
         return in_array(self::OPTION_INTERRUPT_OTHER_SONGS, $this->backend_options, true);
+    }
+
+    public function backendInterruptStartNewSong(): bool
+    {
+        return $this->backendInterruptOtherSongs()
+            && in_array(self::OPTION_INTERRUPT_START_NEW_SONG, $this->backend_options, true);
     }
 
     public function backendMerge(): bool
